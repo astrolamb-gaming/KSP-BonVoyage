@@ -5,6 +5,7 @@ using KSP.UI.Screens;
 using UI;
 using KSP.Localization;
 using ToolbarWrapper;
+using UnityEngine.SceneManagement;
 
 namespace BonVoyage
 {
@@ -118,7 +119,7 @@ namespace BonVoyage
             GameEvents.onGUIApplicationLauncherDestroyed.Add(RemoveLauncher);
             GameEvents.onGameSceneSwitchRequested.Add(OnGameSceneSwitchRequested);
             GameEvents.onVesselChange.Add(OnVesselChange);
-            GameEvents.onLevelWasLoaded.Add(OnLevelWasLoaded);
+            SceneManager.sceneLoaded += OnLevelWasLoadedEvent;
             GameEvents.onVesselGoOffRails.Add(OnVesselGoOffRails);
             GameEvents.onHideUI.Add(OnHideUI);
             GameEvents.onShowUI.Add(OnShowUI);
@@ -146,7 +147,7 @@ namespace BonVoyage
             GameEvents.onGUIApplicationLauncherDestroyed.Remove(RemoveLauncher);
             GameEvents.onGameSceneSwitchRequested.Remove(OnGameSceneSwitchRequested);
             GameEvents.onVesselChange.Remove(OnVesselChange);
-            GameEvents.onLevelWasLoaded.Remove(OnLevelWasLoaded);
+            SceneManager.sceneLoaded -= OnLevelWasLoadedEvent;
             GameEvents.onVesselGoOffRails.Remove(OnVesselGoOffRails);
             GameEvents.onHideUI.Remove(OnHideUI);
             GameEvents.onShowUI.Remove(OnShowUI);
@@ -265,15 +266,22 @@ namespace BonVoyage
         /// Deprecated?
         /// </summary>
         /// <param name="scenes"></param>
-        public void OnLevelWasLoaded(GameScenes scene)
+        public void OnLevelWasLoadedEvent(Scene gameScene, LoadSceneMode mode)
         {
-            if ((scene == GameScenes.FLIGHT) || (scene == GameScenes.SPACECENTER) || (scene == GameScenes.TRACKSTATION))
+            GameScenes scene;
+            if (Enum.TryParse<GameScenes>(gameScene.buildIndex.ToString(), out scene))
             {
-                LoadControllers();
-                if (BonVoyageScenario.Instance != null)
-                    BonVoyageScenario.Instance.LoadScenario();
+                if ((scene == GameScenes.FLIGHT) || (scene == GameScenes.SPACECENTER) || (scene == GameScenes.TRACKSTATION))
+                {
+                    LoadControllers();
+                    if (BonVoyageScenario.Instance != null)
+                        BonVoyageScenario.Instance.LoadScenario();
+                }
+            } else
+            {
+                Debug.Log("[BonVoyage] Error: Build Index unable to be parsed!");
             }
-
+            
             GamePaused = false;
             ShowUI = true;
         }
